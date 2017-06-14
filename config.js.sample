@@ -1,0 +1,7 @@
+module.exports = {
+  COINBASE_API_KEY: '',
+  COINBASE_SECRET_KEY: '',
+  NICEHASH_API_ID: '1234',
+  NICEHASH_API_KEY: '',
+  NICEHASH_USERNAME: 'address.worker'
+};

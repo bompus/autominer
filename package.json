@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "coinbase": "^2.0.6",
+    "nicehash": "^1.0.2"
+  }
+}
