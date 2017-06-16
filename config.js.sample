@@ -1,7 +1,25 @@
+const os = require('os');
 module.exports = {
-  COINBASE_API_KEY: '',
-  COINBASE_SECRET_KEY: '',
-  NICEHASH_API_ID: '1234',
-  NICEHASH_API_KEY: '',
-  NICEHASH_USERNAME: 'address.worker'
+  platform: os.type() === 'Linux' ? 'linux' : (os.type() === 'Darwin' ? 'macos' : 'windows'),
+  interface: process.env.TERM === 'xterm-256color' ? 'blessed' : 'simple',
+  exchange: 'coinbase',
+  pool: 'nicehash',
+  miners: {
+    // Comment out to disable a miner
+    'ccminer-tpruvot': {
+      path: '../ccminer/ccminer'
+    },
+    'ccminer-sp-mod': {
+      path: '../ccminer-sp-mod/ccminer'
+    },
+    'nheqminer': {
+      path: '../nheqminer/build/nheqminer'
+    }
+  },
+  benchmarkSeconds: 30,
+  coinbaseApiKey: 'xxx',
+  coinbaseApiSecret: 'xxx',
+  nicehashApiId: '1234',
+  nicehashApiKey: 'xxxx-xxxx-xxxx-xxxx-xxxx',
+  username: 'address.worker'
 };
