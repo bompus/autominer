@@ -43,9 +43,9 @@ function switchMiners(algs) {
           const str = data.toString().trim();
           const hashrate = miner.extractHashrate(str);
           if (hashrate) {
-            rates.push(hashrate[0]);
+            rates.push(hashrate[0] * RATES[hashrate[1]]);
             rateModifier = hashrate[1];
-            interface.updateMinerInfo(gpu.id, v[0], alg, average(rates), rateModifier);
+            interface.updateMinerInfo(gpu.id, v[0], alg, average(rates) / RATES[rateModifier], rateModifier);
           }
           interface.minerLog(gpu.id, str);
         };
@@ -55,8 +55,8 @@ function switchMiners(algs) {
         let interval = setInterval(() => {
           if (rates.length) {
             const averageRate = average(rates);
-            const profit = averageRate * RATES[rateModifier] * v[2];
-            interface.log(`GPU ${gpu.id} ${v[0]} - ${alg} average rate: ${averageRate.toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
+            const profit = averageRate * v[2];
+            interface.log(`GPU ${gpu.id} ${v[0]} - ${alg} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
           }
         }, 30 * 1000);
         ps.on('close', () => {
@@ -134,9 +134,9 @@ platform.queryGpus()
                 const str = data.toString().trim();
                 const hashrate = miner.extractHashrate(str);
                 if (hashrate) {
-                  rates.push(hashrate[0]);
+                  rates.push(hashrate[0] * RATES[hashrate[1]]);
                   rateModifier = hashrate[1];
-                  interface.updateMinerInfo(gpu.id, name, alg, average(rates), rateModifier);
+                  interface.updateMinerInfo(gpu.id, name, alg, average(rates) / RATES[rateModifier], rateModifier);
                 }
                 interface.minerLog(gpu.id, str);
               };
@@ -150,8 +150,8 @@ platform.queryGpus()
                 interface.clearMinerLog(gpu.id);
                 if (rates.length) {
                   const averageRate = average(rates);
-                  interface.log(`\tHashrate: ${averageRate.toFixed(2)} ${rateModifier}/s`);
-                  gpuBenchmark[alg] = averageRate * RATES[rateModifier];
+                  gpuBenchmark[alg] = averageRate;
+                  interface.log(`\tHashrate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s`);
                   res(promisify(fs.writeFile)(BENCHMARK_FILE, JSON.stringify(benchmarks, null, 2)));
                 } else {
                   interface.log('\tNo hashrate found. Unsupported?');

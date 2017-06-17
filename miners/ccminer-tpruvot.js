@@ -12,7 +12,7 @@ module.exports = {
     'decred',
     'deep',
     'dmd-gr',
-    'equihash',
+    // 'equihash', BROKEN
     'flax',
     'fresh',
     'fugue256',
@@ -60,7 +60,8 @@ module.exports = {
     '-o', `stratum+tcp://${stratumUri}`,
     '-u', username,
     '-p', 'x',
-    '-b', 0
+    '-b', 0,
+    '-R', 5
   ],
   benchmarkCmdLine: (algorithm, cudaGpuId) => [
     '-a', algorithm,
@@ -69,7 +70,7 @@ module.exports = {
     '--benchmark'
   ],
   extractHashrate: stdoutLine => {
-    let match = /(?:GPU #\d+: .+,|Total:) ([\d.]+) ([kMGTP]?H|Sol)\/s/.exec(stdoutLine);
+    let match = /(?:Total:|accepted: \d+\/\d+ \(diff [\d.]+\),) ([\d.]+) ([kMGTP]?H|Sol)\/s/.exec(stdoutLine);
     return match ? [parseFloat(match[1]), match[2]] : null;
   },
   killProcess: ps => {
