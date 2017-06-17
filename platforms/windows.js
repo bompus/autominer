@@ -16,7 +16,7 @@ module.exports = {
     // TODO support AMD GPUs
   }),
   spawn: (path, args) => {
-    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID'}, detached: true});
+    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID'}});
     processes.push(ps);
     ps.on('close', () => processes = processes.filter(v => v !== ps));
     return ps;
