@@ -19,7 +19,10 @@ const miners = mapValues(config.miners, (v, k) =>
 
 const BENCHMARK_FILE = 'benchmark.json';
 
-process.on('exit', () => platform.terminateProcesses());
+process.on('exit', () => {
+  console.log('Terminating processes...');
+  platform.terminateProcesses();
+});
 
 const currentMiners = {};
 function switchMiners(algs) {
@@ -109,10 +112,7 @@ function fetchStats() {
 let gpus, benchmarks, btcUsdPrice;
 platform.queryGpus()
   .then(val => gpus = val)
-  .then(gpus => interface.initialize(gpus, () => {
-    // platform.terminateProcesses();
-    process.exit(0);
-  }))
+  .then(gpus => interface.initialize(gpus, () => process.exit(0)))
   .then(() => promisify(fs.readFile)(BENCHMARK_FILE, {encoding: 'utf8'})
     .then(str => JSON.parse(str), () => ({})))
   .then(val => {
@@ -150,8 +150,9 @@ platform.queryGpus()
 
               let timeout;
               ps.on('close', () => {
-                if (timeout)
+                if (timeout) {
                   clearTimeout(timeout);
+                }
                 interface.clearMinerLog(gpu.id);
                 if (rates.length) {
                   const averageRate = average(rates);
@@ -159,7 +160,7 @@ platform.queryGpus()
                   interface.log(`\tHashrate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s`);
                   res(promisify(fs.writeFile)(BENCHMARK_FILE, JSON.stringify(benchmarks, null, 2)));
                 } else {
-                  interface.log('\tNo hashrate found. Unsupported?');
+                  interface.log('\tNo hashrate found. Unsupported? Benchmark time too low?');
                   res();
                 }
               });

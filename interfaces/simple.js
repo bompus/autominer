@@ -1,9 +1,10 @@
 const colors = require('colors/safe');
+const death = require('death');
 const {mBTC} = require('../util');
 
 function logPrefix() {
   const date = new Date();
-  return `[${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}] `;
+  return colors.blue(`[${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}] `);
 }
 
 function log(str) {
@@ -15,18 +16,20 @@ function logError(str) {
 }
 
 function logDebug(str) {
-  console.debug(logPrefix() + str);
+  console.log(colors.gray(str));
 }
 
 module.exports = {
-  initialize: gpus => {
+  initialize: (gpus, quit) => {
+    death(quit);
+
     log('Found GPUs:');
     gpus.forEach(gpu => log(`\t${gpu.id}: ${gpu.name}`));
   },
   log: log,
   logError: logError,
   minerLog: (id, str) => {
-    logDebug(`GPU ${id}: ${str}`);
+    str.split('\n').forEach(line => logDebug(`GPU ${id}: ${colors.reset(line)}`));
   },
   clearMinerLog(id) {
   },
@@ -34,7 +37,7 @@ module.exports = {
   },
   updateStats(btcUsdPrice, totalProfitability, unpaidBalance) {
     log(`BTC-USD price: $${btcUsdPrice.toFixed(2)}`);
-    log(`${mBTC(totalProfitability).toFixed(2)} mBTC/day ($${(totalProfitability * btcUsdPrice).toFixed(2)})`);
+    log(`Profitability: ${mBTC(totalProfitability).toFixed(2)} mBTC/day ($${(totalProfitability * btcUsdPrice).toFixed(2)})`);
     log(`Unpaid balance: ${mBTC(unpaidBalance).toFixed(2)} mBTC ($${(unpaidBalance * btcUsdPrice).toFixed(2)})`);
   }
 };

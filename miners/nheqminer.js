@@ -16,7 +16,7 @@ module.exports = {
   ],
   extractHashrate: stdoutLine => {
     let match = /Speed(?::| \[15 sec]: [\d.]+ I\/s,) ([\d.]+) Sols\/s/.exec(stdoutLine);
-    return match ? [parseFloat(match[1]), 'H'] : null;
+    return match ? [parseFloat(match[1]), 'Sol'] : null;
   },
   killProcess: ps => {
     ps.kill('SIGTERM');

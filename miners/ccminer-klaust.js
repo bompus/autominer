@@ -18,13 +18,13 @@ module.exports = {
     'jackpot',
     'keccak',
     'luffa',
-    // 'lyra2v2', BROKEN
+    'lyra2v2',
     'myr-gr',
-    // 'neoscrypt', BROKEN
+    'neoscrypt',
     'nist5',
     'penta',
     'quark',
-    // 'qubit', BROKEN
+    'qubit',
     's3',
     'sia',
     'skein',
@@ -32,10 +32,10 @@ module.exports = {
     'vanilla',
     // 'whirlpool', BROKEN
     'whirlpoolx',
-    // 'x11', BROKEN
-    // 'x13', BROKEN
+    'x11',
+    'x13',
     'x14',
-    // 'x15', BROKEN
+    'x15',
     'x17',
     'yescrypt',
   ],
