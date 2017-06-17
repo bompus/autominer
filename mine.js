@@ -7,7 +7,7 @@ const mapValues = require('lodash/mapValues');
 const merge = require('lodash/merge');
 const isEqual = require('lodash/isEqual');
 
-const {RATES, mBTC} = require('./util');
+const {RATES, mBTC, average} = require('./util');
 const config = require('./config');
 const platform = require(`./platforms/${config.platform}`);
 const interface = require(`./interfaces/${config.interface}`);
@@ -38,14 +38,14 @@ function switchMiners(algs) {
       }
       promise.then(() => {
         const ps = platform.spawn(miner.config.path, miner.mineCmdLine(alg, gpu.id, pool.buildStratumUri(alg), config.username));
-        let averageRate, rateModifier;
+        let rates = [], rateModifier;
         const log = data => {
           const str = data.toString().trim();
           const hashrate = miner.extractHashrate(str);
           if (hashrate) {
-            averageRate = ((averageRate || hashrate[0]) + hashrate[0]) / 2;
+            rates.push(hashrate[0]);
             rateModifier = hashrate[1];
-            interface.updateMinerInfo(gpu.id, v[0], alg, hashrate[0], rateModifier);
+            interface.updateMinerInfo(gpu.id, v[0], alg, average(rates), rateModifier);
           }
           interface.minerLog(gpu.id, str);
         };
@@ -53,7 +53,8 @@ function switchMiners(algs) {
         ps.stderr.on('data', log);
 
         let interval = setInterval(() => {
-          if (averageRate) {
+          if (rates.length) {
+            const averageRate = average(rates);
             const profit = averageRate * RATES[rateModifier] * v[2];
             interface.log(`GPU ${gpu.id} ${v[0]} - ${alg} average rate: ${averageRate.toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
           }
@@ -122,20 +123,20 @@ platform.queryGpus()
         const algorithms = difference(intersection(miner.supportedAlgorithms,
           pool.supportedAlgorithms), Object.keys(gpuBenchmark));
         if (algorithms.length) {
-          interface.log(`GPU ${gpu.id}: ${gpu.name} - Benchmarking ${name} algorithms [${algorithms.join(', ')}]`);
+          interface.log(`GPU ${gpu.id}: ${gpu.name} | Benchmarking ${name} algorithms [${algorithms.join(', ')}]`);
 
           algorithms.forEach(alg => {
-            promise = promise.then(() => new Promise((res, rej) => {
-              interface.log(`${name} - ${alg} - GPU ${gpu.id}: ${gpu.name} (${config.benchmarkSeconds}s)`);
+            promise = promise.then(() => new Promise(res => {
+              interface.log(`GPU ${gpu.id}: ${gpu.name} | Benchmarking ${name} - ${alg} (${config.benchmarkSeconds}s)`);
               const ps = platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpu.id));
-              let averageRate, rateModifier;
+              let rates = [], rateModifier;
               const log = data => {
                 const str = data.toString().trim();
                 const hashrate = miner.extractHashrate(str);
                 if (hashrate) {
-                  averageRate = ((averageRate || hashrate[0]) + hashrate[0]) / 2;
+                  rates.push(hashrate[0]);
                   rateModifier = hashrate[1];
-                  interface.updateMinerInfo(gpu.id, name, alg, hashrate[0], rateModifier);
+                  interface.updateMinerInfo(gpu.id, name, alg, average(rates), rateModifier);
                 }
                 interface.minerLog(gpu.id, str);
               };
@@ -147,11 +148,13 @@ platform.queryGpus()
                 if (timeout)
                   clearTimeout(timeout);
                 interface.clearMinerLog(gpu.id);
-                if (averageRate) {
+                if (rates.length) {
+                  const averageRate = average(rates);
                   interface.log(`\tHashrate: ${averageRate.toFixed(2)} ${rateModifier}/s`);
                   gpuBenchmark[alg] = averageRate * RATES[rateModifier];
                   res(promisify(fs.writeFile)(BENCHMARK_FILE, JSON.stringify(benchmarks, null, 2)));
                 } else {
+                  interface.log('\tNo hashrate found. Unsupported?');
                   res();
                 }
               });

@@ -16,7 +16,10 @@ module.exports = {
   H,
   Sol: H,
   RATES,
-  mBTC: function (i) {
+  mBTC(i) {
     return i * 1000;
+  },
+  average(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
 };

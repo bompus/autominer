@@ -18,24 +18,24 @@ module.exports = {
     'jackpot',
     'keccak',
     'luffa',
-    'lyra2v2',
+    // 'lyra2v2', BROKEN
     'myr-gr',
-    'neoscrypt',
+    // 'neoscrypt', BROKEN
     'nist5',
     'penta',
     'quark',
-    'qubit',
+    // 'qubit', BROKEN
     's3',
     'sia',
     'skein',
     'spread',
     'vanilla',
-    'whirlpool',
+    // 'whirlpool', BROKEN
     'whirlpoolx',
-    'x11',
-    'x13',
+    // 'x11', BROKEN
+    // 'x13', BROKEN
     'x14',
-    'x15',
+    // 'x15', BROKEN
     'x17',
     'yescrypt',
   ],
@@ -55,7 +55,7 @@ module.exports = {
     '--benchmark'
   ],
   extractHashrate: stdoutLine => {
-    let match = /Total: ([\d.]+) ([kMGTP]?H)\/s/.exec(stdoutLine);
+    let match = /(?:GPU #\d+: .+,|Total:) ([\d.]+) ([kMGTP]?H|Sol)\/s/.exec(stdoutLine);
     return match ? [parseFloat(match[1]), match[2]] : null;
   },
   killProcess: ps => {
