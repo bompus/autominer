@@ -12,11 +12,14 @@ module.exports = {
     'ccminer-sp-mod': {
       path: '../ccminer-sp-mod/ccminer'
     },
+    'ccminer-klaust': {
+      path: '../ccminer-klaust/ccminer'
+    },
     'nheqminer': {
       path: '../nheqminer/build/nheqminer'
     }
   },
-  benchmarkSeconds: 30,
+  benchmarkSeconds: 60,
   coinbaseApiKey: 'xxx',
   coinbaseApiSecret: 'xxx',
   nicehashApiId: '1234',

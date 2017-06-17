@@ -126,7 +126,7 @@ platform.queryGpus()
 
           algorithms.forEach(alg => {
             promise = promise.then(() => new Promise((res, rej) => {
-              interface.log(`${name} - ${alg} - GPU ${gpu.id}: ${gpu.name}`);
+              interface.log(`${name} - ${alg} - GPU ${gpu.id}: ${gpu.name} (${config.benchmarkSeconds}s)`);
               const ps = platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpu.id));
               let averageRate, rateModifier;
               const log = data => {

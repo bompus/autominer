@@ -11,13 +11,14 @@ module.exports = {
     'c11',
     'credit',
     'deep',
-    'dmdd-gr',
+    'dmd-gr',
+    'flax',
     'fresh',
     'fugue256',
     'groestl',
     'heavy',
-    'keccak',
     'jackpot',
+    'keccak',
     'luffa',
     'lyra2',
     'lyra2v2',
@@ -26,21 +27,22 @@ module.exports = {
     'neoscrypt',
     // 'nist5', BROKEN
     'penta',
+    'quark',
     'qubit',
+    's3',
     'scrypt',
     'scrypt-jane',
     'skein',
-    's3',
     'spread',
+    'vanilla',
+    'whirlpool',
+    'whirlpoolx',
     'x11',
     'x13',
     'x14',
     'x15',
     'x17',
-    'vanilla',
     'yescrypt',
-    'whirlpool',
-    'whirlpoolx'
   ],
   timedBenchmark: true,
   mineCmdLine: (algorithm, cudaGpuId, stratumUri, username) => [
@@ -58,7 +60,7 @@ module.exports = {
     '--benchmark'
   ],
   extractHashrate: stdoutLine => {
-    let match = /Total: ([\d.]+) ([kMGTP]H)\/s/.exec(stdoutLine);
+    let match = /Total: ([\d.]+) ([kMGTP]?H)\/s/.exec(stdoutLine);
     return match ? [parseFloat(match[1]), match[2]] : null;
   },
   killProcess: ps => {

@@ -5,7 +5,7 @@ const GH = Math.pow(10, 9);
 const MH = Math.pow(10, 6);
 const kH = Math.pow(10, 3);
 
-const RATES = {PH, TH, GH, MH, kH, H};
+const RATES = {PH, TH, GH, MH, kH, H, Sol: H};
 
 module.exports = {
   PH,
@@ -14,6 +14,7 @@ module.exports = {
   MH,
   kH,
   H,
+  Sol: H,
   RATES,
   mBTC: function (i) {
     return i * 1000;
