@@ -1,6 +1,6 @@
 module.exports = {
   supportedAlgorithms: [
-    // 'equihash' BROKEN
+    'equihash'
   ],
   timedBenchmark: false,
   mineCmdLine: (algorithm, cudaGpuId, stratumUri, username) => [

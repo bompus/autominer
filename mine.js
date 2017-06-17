@@ -6,6 +6,7 @@ const intersection = require('lodash/intersection');
 const mapValues = require('lodash/mapValues');
 const merge = require('lodash/merge');
 const isEqual = require('lodash/isEqual');
+const colors = require('colors');
 
 const {RATES, mBTC, average} = require('./util');
 const config = require('./config');
@@ -37,6 +38,8 @@ function switchMiners(algs) {
         });
       }
       promise.then(() => {
+        interface.updateMinerInfo(gpu.id, v[0], alg);
+
         const ps = platform.spawn(miner.config.path, miner.mineCmdLine(alg, gpu.id, pool.buildStratumUri(alg), config.username));
         let rates = [], rateModifier;
         const log = data => {
@@ -56,7 +59,7 @@ function switchMiners(algs) {
           if (rates.length) {
             const averageRate = average(rates);
             const profit = averageRate * v[2];
-            interface.log(`GPU ${gpu.id} ${v[0]} - ${alg} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
+            interface.log(`GPU ${gpu.id}: ${v[0]} ${colors.bold(alg)} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
           }
         }, 30 * 1000);
         ps.on('close', () => {
@@ -95,7 +98,7 @@ function fetchStats() {
               }
             }
           }));
-        interface.log(`GPU ${gpu.id}: Choosing ${algorithm[2]} - ${algorithm[0]} | est. ${mBTC(algorithm[1]).toFixed(2)} mBTC/day ($${(algorithm[1] * btcUsdPrice).toFixed(2)})`);
+        interface.log(`GPU ${gpu.id}: Choosing ${algorithm[2]} ${colors.bold(algorithm[0])} | est. ${mBTC(algorithm[1]).toFixed(2)} mBTC/day ($${(algorithm[1] * btcUsdPrice).toFixed(2)})`);
         algs[gpu.id] = [algorithm[2], algorithm[0], prices[algorithm[0]]];
       });
       return algs;
@@ -128,6 +131,8 @@ platform.queryGpus()
           algorithms.forEach(alg => {
             promise = promise.then(() => new Promise(res => {
               interface.log(`GPU ${gpu.id}: ${gpu.name} | Benchmarking ${name} - ${alg} (${config.benchmarkSeconds}s)`);
+              interface.updateMinerInfo(gpu.id, name, alg);
+
               const ps = platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpu.id));
               let rates = [], rateModifier;
               const log = data => {
