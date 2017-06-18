@@ -1,12 +1,13 @@
 const fs = require('fs');
 const {promisify} = require('util');
+const colors = require('colors');
 const difference = require('lodash/difference');
+const find = require('lodash/find');
 const forOwn = require('lodash/forOwn');
 const intersection = require('lodash/intersection');
+const isEqual = require('lodash/isEqual');
 const mapValues = require('lodash/mapValues');
 const merge = require('lodash/merge');
-const isEqual = require('lodash/isEqual');
-const colors = require('colors');
 
 const {RATES, mBTC, average} = require('./util');
 const config = require('./config');
@@ -27,7 +28,7 @@ process.on('exit', () => {
 const currentMiners = {};
 function switchMiners(algs) {
   forOwn(algs, (v, k) => {
-    const gpu = gpus[k];
+    const gpu = find(gpus, {id: k});
     const miner = miners[v[0]];
     const alg = v[1];
 
@@ -71,7 +72,7 @@ function switchMiners(algs) {
         });
 
         currentMiners[k] = [[v[0], v[1]], ps];
-      });
+      }, err => interface.logError(`Failed to start miner ${err}`));
     }
   });
 }
@@ -111,7 +112,7 @@ function fetchStats() {
 
 let gpus, benchmarks, btcUsdPrice;
 platform.queryGpus()
-  .then(val => gpus = val)
+  .then(val => gpus = config.enabledGpus ? val.filter(v => config.enabledGpus.includes(v.id)) : val)
   .then(gpus => interface.initialize(gpus, () => process.exit(0)))
   .then(() => promisify(fs.readFile)(BENCHMARK_FILE, {encoding: 'utf8'})
     .then(str => JSON.parse(str), () => ({})))
