@@ -2,11 +2,7 @@ const {PH, TH, GH, MH, kH, H} = require('../util');
 const {nicehashApiId, nicehashApiKey, username} = require('../config');
 const NiceHashClient = require('nicehash');
 const nh = new NiceHashClient({apiId: nicehashApiId, apiKey: nicehashApiKey});
-const findIndex = require('lodash/findIndex');
-
-const ALIASES = {
-  'lyra2v2': 'lyra2rev2'
-};
+const find = require('lodash/find');
 
 const ALGORITHMS = [
   {name: 'Scrypt', algorithm: 'scrypt'},
@@ -74,10 +70,10 @@ module.exports = {
         return [totalProfitability, unpaidBalance];
       });
   },
-  buildStratumUri: alg => {
-    let index = findIndex(ALGORITHMS, val => val.algorithm === alg);
-    if (index === -1)
-      throw new Error(`NiceHash: Unsupported algorithm ${alg}`);
-    return `${ALIASES[alg] || alg}.usa.nicehash.com:${3333 + index}`;
+  buildStratumUri: name => {
+    const alg = find(ALGORITHMS, val => val.algorithm === name);
+    if (!alg)
+      throw new Error(`NiceHash: Unsupported algorithm ${name}`);
+    return `${alg.name.toLowerCase()}.usa.nicehash.com:${3333 + ALGORITHMS.indexOf(alg)}`;
   }
 };

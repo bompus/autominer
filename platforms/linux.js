@@ -1,4 +1,5 @@
 const {exec, spawn} = require('child_process');
+const paths = require('path');
 
 let processes = [];
 module.exports = {
@@ -16,7 +17,12 @@ module.exports = {
     // TODO support AMD GPUs
   }),
   spawn: (path, args) => {
-    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID'}});
+    if (path.endsWith('.exe')) {
+      args = args || [];
+      args.unshift(path);
+      path = 'wine'; // Requires wine-staging
+    }
+    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID'}, cwd: paths.dirname(path)});
     processes.push(ps);
     ps.on('close', () => processes = processes.filter(v => v !== ps));
     return ps;

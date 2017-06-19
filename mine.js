@@ -34,40 +34,49 @@ function switchMiners(algs) {
 
     if (!currentMiners.hasOwnProperty(k) || !isEqual(currentMiners[k][0], [v[0], v[1]])) {
       let promise = Promise.resolve();
-      if (currentMiners.hasOwnProperty(k)) {
+      /*if (currentMiners.hasOwnProperty(k) && currentMiners[k][0][0] === v[0] && miner.switchAlgorithm) {
+        promise
+      } else*/ if (currentMiners.hasOwnProperty(k)) {
         promise = new Promise(res => {
           const ps = currentMiners[k][1];
           ps.on('close', () => res());
-          miners[currentMiners[k][0][0]].killProcess(ps);
+          miners[currentMiners[k][0][0]].killProcess(ps, k);
         });
       }
       promise.then(() => {
         interface.updateMinerInfo(gpu.id, v[0], alg);
 
-        const ps = platform.spawn(miner.config.path, miner.mineCmdLine(alg, gpu.id, pool.buildStratumUri(alg), config.username));
+        const intervals = [];
+        const ps = spawnMiner(miner, alg, gpu.id, false);
         let rates = [], rateModifier;
         const log = data => {
           const str = data.toString().trim();
+          if (str.includes('api | Listening')) {
+            // FIXME put in a better location
+            miner.switchAlgorithm(alg, gpu.id, pool.buildStratumUri(alg), config.username);
+            intervals.push(setInterval(() => miner.printHashrate(gpu.id), 2000));
+          }
           const hashrate = miner.extractHashrate(str);
           if (hashrate) {
             rates.push(hashrate[0] * RATES[hashrate[1]]);
             rateModifier = hashrate[1];
             interface.updateMinerInfo(gpu.id, v[0], alg, average(rates) / RATES[rateModifier], rateModifier);
           }
-          interface.minerLog(gpu.id, str);
+          if (!str.startsWith('fixme:')) // FIXME filter out wine debug lines
+            interface.minerLog(gpu.id, str);
         };
         ps.stdout.on('data', log);
         ps.stderr.on('data', log);
 
-        let interval = setInterval(() => {
+        intervals.push(setInterval(() => {
           if (rates.length) {
             const averageRate = average(rates);
             const profit = averageRate * v[2];
             interface.log(`GPU ${gpu.id}: ${v[0]} ${colors.bold(alg)} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
           }
-        }, 30 * 1000);
+        }, 30 * 1000));
         ps.on('close', () => {
-          clearInterval(interval);
+          intervals.forEach(i => clearInterval(i));
           interface.clearMinerLog(gpu.id);
         });
 
@@ -110,6 +119,16 @@ function fetchStats() {
     .then(switchMiners);
 }
 
+function spawnMiner(miner, alg, gpuId, benchmark) {
+  if (benchmark && miner.benchmarkCmdLine) {
+    return platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpuId));
+  } else if (!benchmark && miner.mineCmdLine) {
+    return platform.spawn(miner.config.path, miner.mineCmdLine(alg, gpuId, pool.buildStratumUri(alg), config.username));
+  } else {
+    return platform.spawn(miner.config.path, miner.cmdLine(alg, gpuId));
+  }
+}
+
 let gpus, benchmarks, btcUsdPrice;
 platform.queryGpus()
   .then(val => gpus = config.enabledGpus ? val.filter(v => config.enabledGpus.includes(v.id)) : val)
@@ -134,26 +153,32 @@ platform.queryGpus()
               interface.log(`GPU ${gpu.id}: ${gpu.name} | Benchmarking ${name} - ${alg} (${config.benchmarkSeconds}s)`);
               interface.updateMinerInfo(gpu.id, name, alg);
 
-              const ps = platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpu.id));
+              const timeouts = [];
+              const intervals = [];
+              const ps = spawnMiner(miner, alg, gpu.id, true);
               let rates = [], rateModifier;
               const log = data => {
                 const str = data.toString().trim();
+                if (str.includes('api | Listening')) {
+                  // FIXME put in a better location
+                  miner.switchAlgorithm(alg, gpu.id, 'benchmark', '');
+                  intervals.push(setInterval(() => miner.printHashrate(gpu.id), 2000));
+                }
                 const hashrate = miner.extractHashrate(str);
                 if (hashrate) {
                   rates.push(hashrate[0] * RATES[hashrate[1]]);
                   rateModifier = hashrate[1];
                   interface.updateMinerInfo(gpu.id, name, alg, average(rates) / RATES[rateModifier], rateModifier);
                 }
-                interface.minerLog(gpu.id, str);
+                if (!str.startsWith('fixme:')) // FIXME filter out wine debug lines
+                  interface.minerLog(gpu.id, str);
               };
               ps.stdout.on('data', log);
               ps.stderr.on('data', log);
 
-              let timeout;
               ps.on('close', () => {
-                if (timeout) {
-                  clearTimeout(timeout);
-                }
+                timeouts.forEach(t => clearTimeout(t));
+                intervals.forEach(i => clearInterval(i));
                 interface.clearMinerLog(gpu.id);
                 if (rates.length) {
                   const averageRate = average(rates);
@@ -166,10 +191,10 @@ platform.queryGpus()
                 }
               });
               if (miner.timedBenchmark) {
-                timeout = setTimeout(() => {
-                  timeout = null;
-                  miner.killProcess(ps);
-                }, config.benchmarkSeconds * 1000);
+                timeouts.push(setTimeout(() => {
+                  interface.log('\tStopping miner...');
+                  miner.killProcess(ps, gpu.id);
+                }, config.benchmarkSeconds * 1000));
               }
             }));
           });
