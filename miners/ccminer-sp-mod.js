@@ -60,7 +60,7 @@ module.exports = {
     '--benchmark'
   ],
   extractHashrate: stdoutLine => {
-    let match = /(?:Total:|accepted: \d+\/\d+ \([\d.]+%\),) ([\d.]+) ?([kMGTP]?H|Sol)\/s/.exec(stdoutLine);
+    let match = /(?:Total:|accepted: \d+\/\d+ \([\d.]+%\),|GPU #\d+:) ([\d.]+) ?([kMGTP]?H|Sol|hash)\/s/.exec(stdoutLine);
     return match ? [parseFloat(match[1]), match[2]] : null;
   },
   killProcess: ps => {
