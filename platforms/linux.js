@@ -22,7 +22,7 @@ module.exports = {
       args.unshift(path);
       path = 'wine'; // Requires wine-staging
     }
-    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID'}, cwd: paths.dirname(path)});
+    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID', 'LD_PRELOAD': '/usr/lib/libcurl.so.3'}}); // , cwd: paths.dirname(path)
     processes.push(ps);
     ps.on('close', () => processes = processes.filter(v => v !== ps));
     return ps;

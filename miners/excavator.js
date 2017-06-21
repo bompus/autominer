@@ -10,11 +10,11 @@ function apiRequest(port, method, params) {
   return new Promise((res, rej) => {
     client.connect(port, '127.0.0.1', () => {
       let stringify = JSON.stringify(apiCommand(method, params));
-      console.log(`send data ${stringify}`);
+      //console.log(`send data ${stringify}`);
       client.write(stringify + '\n');
     });
     client.on('data', data => {
-      console.log(`got data ${data.toString().trim()}`);
+      //console.log(`got data ${data.toString().trim()}`);
       let obj = JSON.parse(data);
       if (obj.error) {
         rej(obj.error);
@@ -33,7 +33,7 @@ module.exports = {
     'pascal',
     'decred',
     'sia',
-    // 'lbry', BROKEN in wine
+    'lbry',
     // 'daggerhashimoto' AMD only
   ],
   timedBenchmark: true,

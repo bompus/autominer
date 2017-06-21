@@ -1,6 +1,7 @@
 /config.js
-/benchmark.json
+/benchmark.json*
 /node_modules/
 /.idea/
 /*.iml
 /bin/
+tags
