@@ -40,6 +40,7 @@ module.exports = {
     'skein',
     'skein2',
     'timetravel',
+    'tribus',
     'vanilla',
     'veltor',
     'whirlcoin',

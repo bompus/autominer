@@ -27,12 +27,11 @@ process.on('exit', () => {
 
 const currentMiners = {};
 function switchMiners(algs) {
-  forOwn(algs, (v, k) => {
+  forOwn(algs, ([name, alg, price], k) => {
     const gpu = find(gpus, {id: k});
-    const miner = miners[v[0]];
-    const alg = v[1];
+    const miner = miners[name];
 
-    if (!currentMiners.hasOwnProperty(k) || !isEqual(currentMiners[k][0], [v[0], v[1]])) {
+    if (!currentMiners.hasOwnProperty(k) || !isEqual(currentMiners[k][0], [name, alg])) {
       let promise = Promise.resolve();
       /*if (currentMiners.hasOwnProperty(k) && currentMiners[k][0][0] === v[0] && miner.switchAlgorithm) {
         promise
@@ -44,7 +43,7 @@ function switchMiners(algs) {
         });
       }
       promise.then(() => {
-        interface.updateMinerInfo(gpu.id, v[0], alg);
+        interface.updateMinerInfo(gpu.id, name, alg);
 
         const intervals = [];
         const ps = spawnMiner(miner, alg, gpu.id, false);
@@ -67,7 +66,7 @@ function switchMiners(algs) {
               } else {
                 rates.push(hashrate[0] * RATES[hashrate[1]]);
                 rateModifier = hashrate[1];
-                interface.updateMinerInfo(gpu.id, v[0], alg, average(rates) / RATES[rateModifier], rateModifier);
+                interface.updateMinerInfo(gpu.id, name, alg, average(rates) / RATES[rateModifier], rateModifier);
               }
             }
             if (!str.startsWith('fixme:')) // FIXME filter out wine debug lines
@@ -76,7 +75,6 @@ function switchMiners(algs) {
           prevLine = split[split.length - 1];
         };
         ps.stdout.on('data', log);
-        ps.stderr.on('data', log);
 
         intervals.push(setInterval(() => {
           if (rates.length) {
@@ -84,8 +82,8 @@ function switchMiners(algs) {
               // TODO
             } else {
               const averageRate = average(rates);
-              const profit = averageRate * v[2];
-              interface.log(`GPU ${gpu.id}: ${v[0]} ${colors.bold(alg)} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
+              const profit = averageRate * price;
+              interface.log(`GPU ${gpu.id}: ${name} ${colors.bold(alg)} average rate: ${(averageRate / RATES[rateModifier]).toFixed(2)} ${rateModifier}/s | ${mBTC(profit).toFixed(2)} mBTC/day ($${(profit * btcUsdPrice).toFixed(2)})`);
             }
           }
         }, 30 * 1000));
@@ -94,7 +92,7 @@ function switchMiners(algs) {
           interface.clearMinerLog(gpu.id);
         });
 
-        currentMiners[k] = [[v[0], v[1]], ps];
+        currentMiners[k] = [[name, alg], ps];
       }, err => interface.logError(`Failed to start miner ${err}`));
     }
   });
@@ -109,7 +107,8 @@ function fetchStats() {
   return exchange.getBtcUsdPrice()
     .then(price => btcUsdPrice = price)
     .then(() => pool.fetchStats())
-    .then(stats => interface.updateStats(btcUsdPrice, stats[0], stats[1]))
+    .then(([totalProfitability, unpaidBalance]) =>
+      interface.updateStats(btcUsdPrice, totalProfitability, unpaidBalance))
     .then(() => pool.fetchPrices())
     .then(prices => {
       const algs = {};
@@ -146,7 +145,8 @@ function spawnMiner(miner, alg, gpuId, benchmark) {
   if (benchmark && miner.benchmarkCmdLine) {
     return platform.spawn(miner.config.path, miner.benchmarkCmdLine(alg, gpuId));
   } else if (miner.mineCmdLine) {
-    return platform.spawn(miner.config.path, miner.mineCmdLine(alg, gpuId, pool.buildStratumUri(alg), config.nicehashUsername));
+    return platform.spawn(miner.config.path,
+      miner.mineCmdLine(alg, gpuId, pool.buildStratumUri(alg), config.nicehashUsername));
   } else {
     return platform.spawn(miner.config.path, miner.cmdLine(alg, gpuId));
   }
@@ -207,7 +207,6 @@ platform.queryGpus()
                 prevLine = split[split.length - 1];
               };
               ps.stdout.on('data', log);
-              ps.stderr.on('data', log);
 
               ps.on('close', () => {
                 timeouts.forEach(t => clearTimeout(t));

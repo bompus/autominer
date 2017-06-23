@@ -1,5 +1,6 @@
-const {exec, spawn} = require('child_process');
+const {exec} = require('child_process');
 const paths = require('path');
+const pty = require('pty.js');
 
 let processes = [];
 module.exports = {
@@ -17,12 +18,16 @@ module.exports = {
     // TODO support AMD GPUs
   }),
   spawn: (path, args) => {
+    let file = paths.resolve(path);
+    const cwd = paths.dirname(paths.resolve(path));
     if (path.endsWith('.exe')) {
       args = args || [];
-      args.unshift(path);
-      path = 'wine'; // Requires wine-staging
+      args.unshift(file);
+      file = 'wine'; // Requires wine-staging
     }
-    const ps = spawn(path, args, {env: {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID', 'LD_PRELOAD': '/usr/lib/libcurl.so.3'}}); // , cwd: paths.dirname(path)
+    const ps = pty.spawn(file, args, {cwd, env:
+      {'CUDA_DEVICE_ORDER': 'PCI_BUS_ID', 'LD_PRELOAD': '/usr/lib/libcurl.so.3'}
+    });
     processes.push(ps);
     ps.on('close', () => processes = processes.filter(v => v !== ps));
     return ps;

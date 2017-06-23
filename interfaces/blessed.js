@@ -130,6 +130,7 @@ module.exports = {
   },
   updateMinerInfo(id, miner, alg, hashrate, hashType) {
     gpuInfo[id].setContent(`${miner} {bold}${alg}{/bold}${hashrate ? ` | ${hashrate.toFixed(2)} ${hashType}/s` : ''}`);
+    screen.render();
   },
   updateStats(btcUsdPrice, totalProfitability, unpaidBalance) {
     consoleInfo.setContent(`BTC: $${btcUsdPrice.toFixed(2)} | ${mBTC(totalProfitability).toFixed(2)} mBTC/day ($${(totalProfitability * btcUsdPrice).toFixed(2)}) | Unpaid: ${mBTC(unpaidBalance).toFixed(2)} mBTC ($${(unpaidBalance * btcUsdPrice).toFixed(2)})`);
